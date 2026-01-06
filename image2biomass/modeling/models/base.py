@@ -13,9 +13,6 @@ class BaseModel(ABC):
         self.cfg = kwargs
 
     @abstractmethod
-    def config(self) -> dict[str, Any]: ...
-
-    @abstractmethod
     def fit(self, X, y) -> "BaseModel": ...
 
     @abstractmethod
@@ -29,4 +26,9 @@ class BaseModel(ABC):
 
     def save(self, path: Path) -> None:
         """Sauvegarde le modèle sur le disque."""
+        ...
+
+    @classmethod
+    def load(cls, path: Path) -> "BaseModel":
+        """Charge le modèle depuis le disque."""
         ...

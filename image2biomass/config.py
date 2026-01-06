@@ -24,6 +24,14 @@ FIGURES_DIR = REPORTS_DIR / "figures"
 IMAGE_PATH_COL = "image_path"
 TARGET_COL = "target"
 
+SAMPLE_WEIGHTS = {
+    "Dry_Green_g": 0.1,
+    "Dry_Dead_g": 0.1,
+    "Dry_Clover_g": 0.1,
+    "GDM_g": 0.2,
+    "Dry_Total_g": 0.5,
+}
+
 # If tqdm is installed, configure loguru with tqdm.write
 # https://github.com/Delgan/loguru/issues/135
 try:

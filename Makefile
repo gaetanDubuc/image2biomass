@@ -7,10 +7,12 @@ PYTHON_VERSION = 3.13
 PYTHON_INTERPRETER = uv run
 
 # Training parameters (override with make train FEATURES_PATH=... etc.)
-FEATURES_PATH ?= data/processed/features_train.csv
+FEATURES_PATH ?= data/processed/features_dinov2_small.csv
 LABELS_PATH ?= data/processed/train.csv
-MODEL_NAME ?= xgboost
-MODEL_OUT ?= models/model.json
+MODEL_NAME ?= sklearn_gboost
+MODEL_OUT ?= models/model.pkl
+MODEL_PATH ?= models/model.pkl
+PREDICTIONS_OUT ?= data/processed/predictions.csv
 
 #################################################################################
 # COMMANDS                                                                      #
@@ -86,6 +88,16 @@ train: requirements
 		--labels-path $(LABELS_PATH) \
 		--model-name $(MODEL_NAME) \
 		--model-out $(MODEL_OUT)
+
+## Evaluate a trained model
+.PHONY: evaluate
+evaluate: requirements
+	$(PYTHON_INTERPRETER) image2biomass/modeling/evaluate.py \
+		--features-path $(FEATURES_PATH) \
+		--labels-path $(LABELS_PATH) \
+		--model-name $(MODEL_NAME) \
+		--model-path $(MODEL_PATH) \
+		--output-path $(PREDICTIONS_OUT)
 
 #################################################################################
 # Self Documenting Commands                                                     #

@@ -1,15 +1,20 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from os import sep
 from pathlib import Path
 from typing import Iterable, Sequence
 
 from loguru import logger
 import numpy as np
 from PIL import Image
-import polars
+import polars as pl
 import torch
+import tqdm
 from transformers import AutoImageProcessor, AutoModel
+import typer
+
+from image2biomass.config import PROCESSED_DATA_DIR, RAW_DATA_DIR
 
 
 @dataclass(frozen=True)
@@ -57,14 +62,6 @@ class DinoV2HFEmbedder:
             return torch.device("mps")
         return torch.device("cpu")
 
-    def create_features(self, image_paths: Sequence[Path], output_path: Path) -> np.ndarray:
-        embeddings = self.embed(image_paths)
-
-        df = polars.DataFrame({"embeddings": embeddings.tolist()})
-        df.write_csv(output_path)
-
-        return embeddings
-
     def embed(self, image_paths: Sequence[Path]) -> np.ndarray:
         if len(image_paths) == 0:
             return np.zeros((0, 0), dtype=np.float32)
@@ -72,7 +69,10 @@ class DinoV2HFEmbedder:
         all_embeddings: list[np.ndarray] = []
 
         with torch.inference_mode():
-            for batch in self._batched(image_paths, self.config.batch_size):
+            for batch in tqdm.tqdm(
+                self._batched(image_paths, self.config.batch_size),
+                total=len(image_paths) // self.config.batch_size,
+            ):
                 images = [self._load_image(p) for p in batch]
                 inputs = self.processor(images=images, return_tensors="pt")
                 inputs = {k: v.to(self.device) for k, v in inputs.items()}
@@ -111,3 +111,29 @@ class DinoV2HFEmbedder:
             raise ValueError("batch_size must be > 0")
         for i in range(0, len(items), batch_size):
             yield list(items[i : i + batch_size])
+
+
+app = typer.Typer()
+
+
+@app.command()
+def create_features(
+    input_path: Path = PROCESSED_DATA_DIR / "train.csv",
+    output_path: Path = PROCESSED_DATA_DIR / "features_dinov2_small.csv",
+) -> np.ndarray:
+    image_paths = pl.read_csv(input_path)["image_path"].unique()
+    image_paths_with_prefix = (str(RAW_DATA_DIR) + sep + image_paths).to_list()
+
+    embedder = DinoV2HFEmbedder()
+    embeddings = embedder.embed(image_paths_with_prefix)
+
+    df = pl.DataFrame(embeddings)
+
+    df = df.with_columns(pl.lit(image_paths).alias("image_path"))
+
+    df.write_csv(output_path)
+    return embeddings
+
+
+if __name__ == "__main__":
+    app()

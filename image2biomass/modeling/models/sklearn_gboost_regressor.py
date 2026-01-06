@@ -8,24 +8,17 @@ from loguru import logger
 import numpy as np
 from sklearn.ensemble import GradientBoostingRegressor
 
+from image2biomass.modeling.models.base import BaseModel
 from image2biomass.modeling.models.registry import register
 
 
 @dataclass(frozen=True)
 class Config:
-    n_estimators: int = 500
-    learning_rate: float = 0.05
-    max_depth: int = 8
-    subsample: float = 0.8
-    colsample_bytree: float = 0.8
-    reg_alpha: float = 0.0
-    reg_lambda: float = 1.0
-    random_state: int = 42
-    n_jobs: int = -1
+    pass
 
 
 @register("sklearn_gboost")
-class SkLearnGradientBoostingRegressor:
+class SkLearnGradientBoostingRegressor(BaseModel):
     """Scikit-learn GradientBoosting regressor wrapper with pickle serialization."""
 
     def __init__(self, config: Config = Config()):
