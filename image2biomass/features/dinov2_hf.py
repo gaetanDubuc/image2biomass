@@ -19,7 +19,7 @@ from image2biomass.config import PROCESSED_DATA_DIR, RAW_DATA_DIR
 
 @dataclass(frozen=True)
 class DinoV2HFConfig:
-    model_name: str = "facebook/dinov2-small"
+    model_name: str = "facebook/dinov2-base"
     batch_size: int = 32
     num_workers: int = 0  # kept for future (DataLoader)
     device: str | None = None  # "cuda" | "mps" | "cpu" | None(auto)
@@ -119,7 +119,7 @@ app = typer.Typer()
 @app.command()
 def create_features(
     input_path: Path = PROCESSED_DATA_DIR / "train.csv",
-    output_path: Path = PROCESSED_DATA_DIR / "features_dinov2_small.csv",
+    output_path: Path = PROCESSED_DATA_DIR / "features_dinov2_base.csv",
 ) -> np.ndarray:
     image_paths = pl.read_csv(input_path)["image_path"].unique()
     image_paths_with_prefix = (str(RAW_DATA_DIR) + sep + image_paths).to_list()

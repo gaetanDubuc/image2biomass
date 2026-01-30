@@ -53,6 +53,11 @@ def get_Xy_from_csv(
     X = df.select(feature_cols).to_numpy().astype(np.float32)
     y = df[TARGET_COL].to_numpy().astype(np.float32)
 
+    print(
+        X.shape,
+        y.shape,
+    )
+
     sample_weights = (
         df.select(pl.col("target_name").replace(SAMPLE_WEIGHTS).alias("sample_weight"))
         .to_numpy()

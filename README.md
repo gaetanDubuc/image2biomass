@@ -51,11 +51,79 @@ A short description of the project.
     │
     ├── modeling                
     │   ├── __init__.py 
-    │   ├── predict.py          <- Code to run model inference with trained models          
-    │   └── train.py            <- Code to train models
+    │   ├── predict.py          <- Code to run model inference with trained models
+    │   ├── train.py            <- Code to train models
+    │   ├── evaluate.py         <- Code to evaluate trained models
+    │   ├── cross_validate.py   <- Code to run cross-validation
+    │   └── tune_hyperparameters.py <- Code to optimize XGBoost hyperparameters with Optuna
     │
     └── plots.py                <- Code to create visualizations
 ```
+
+## Quick Start
+
+### 1. Environment Setup
+
+```bash
+# Create environment and install dependencies
+make create_environment
+source .venv/bin/activate  # Unix/macOS
+make requirements
+```
+
+### 2. Data Pipeline
+
+```bash
+# Download competition data
+make ingest
+
+# Process data and create train/test splits
+make data
+
+# Extract DINOv2 features
+uv run image2biomass/features.py \
+  data/raw/train \
+  --output data/processed/features_dinov2_small.csv
+```
+
+### 3. Model Training
+
+```bash
+# Train a single model
+make train \
+  MODEL_NAME=xgboost \
+  FEATURES_PATH=data/processed/features_dinov2_small.csv
+
+# Cross-validation on multiple folds
+make cross-validate \
+  MODEL_NAME=xgboost \
+  SPLITS_DIR=data/processed/splits/month
+
+# Hyperparameter tuning with Optuna (see docs/hyperparameter-tuning.md)
+make tune \
+  TRAIN_SPLIT=data/processed/splits/month/0/train_split.csv \
+  VAL_SPLIT=data/processed/splits/month/0/val_split.csv \
+  N_TRIALS=100
+```
+
+### 4. Evaluation & Prediction
+
+```bash
+# Evaluate a trained model
+make evaluate \
+  MODEL_PATH=models/xgboost_tuned.pkl \
+  LABELS_PATH=data/processed/splits/month/0/val_split.csv
+
+# Generate predictions
+uv run image2biomass/modeling/predict.py \
+  --model-path models/xgboost_tuned.pkl \
+  --features-path data/processed/features_dinov2_small.csv \
+  --output data/processed/predictions.csv
+```
+
+## Documentation
+
+- **[Hyperparameter Tuning Guide](docs/hyperparameter-tuning.md)** - Detailed guide for XGBoost optimization with Optuna
 
 --------
 

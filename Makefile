@@ -13,6 +13,10 @@ MODEL_NAME ?= sklearn_gboost
 MODEL_OUT ?= models/model.pkl
 MODEL_PATH ?= models/model.pkl
 PREDICTIONS_OUT ?= data/processed/predictions.csv
+SPLITS_DIR ?= data/processed/splits/month
+TRAIN_SPLIT ?= data/processed/splits/month/0/train_split.csv
+VAL_SPLIT ?= data/processed/splits/month/0/val_split.csv
+N_TRIALS ?= 100
 
 #################################################################################
 # COMMANDS                                                                      #
@@ -97,7 +101,25 @@ evaluate: requirements
 		--labels-path $(LABELS_PATH) \
 		--model-name $(MODEL_NAME) \
 		--model-path $(MODEL_PATH) \
-		--output-path $(PREDICTIONS_OUT)
+
+## Cross-validate on multiple folds (train + eval)
+.PHONY: cross-validate
+cross-validate: requirements
+	$(PYTHON_INTERPRETER) image2biomass/modeling/cross_validate.py \
+		$(SPLITS_DIR) \
+		--features-path $(FEATURES_PATH) \
+		--model-name $(MODEL_NAME) \
+		--train \
+
+## Tune XGBoost hyperparameters with Optuna
+.PHONY: tune
+tune: requirements
+	$(PYTHON_INTERPRETER) image2biomass/modeling/tune_hyperparameters.py \
+		$(TRAIN_SPLIT) \
+		$(VAL_SPLIT) \
+		--features-path $(FEATURES_PATH) \
+		--n-trials $(N_TRIALS) \
+		--output-name xgboost_tuned
 
 #################################################################################
 # Self Documenting Commands                                                     #
